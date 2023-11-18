@@ -1,5 +1,8 @@
+import * as ethers from "ethers";
+
 import { NesyxConnectContainer } from "./container";
 import { UtilsProvider } from "./providers/utils.provider";
+import { WalletInitParams } from "./types";
 
 let instance: NesyxConnectContainer;
 
@@ -15,7 +18,7 @@ export const getInstance = () => {
  * Init an NesyxConnect instance.
  * The function has its own boundary context.
  */
-export const init = () => {
+export const init = (params: WalletInitParams) => {
   /**
    * Destroy the old node if possible
    */
@@ -30,23 +33,7 @@ export const init = () => {
    * Initialize new instance
    */
   instance = new NesyxConnectContainer(rootDOMId);
-  return instance.init.call(instance);
-};
-
-/**
- * The function to open modal
- */
-export const openModal = () => {
-  if (!instance) throw new Error("NesyxConnect isn't initialized");
-  return instance.openConnectModal.call(instance);
-};
-
-/**
- * The function to close the modal
- */
-export const closeModal = () => {
-  if (!instance) throw new Error("NesyxConnect isn't initialized");
-  return instance.destroy.call(instance);
+  return instance.init.call(instance, params);
 };
 
 /**
@@ -59,8 +46,7 @@ if (window) {
   windowInstance.Nesyx.NesyxConnect = NesyxConnectContainer;
   windowInstance.Nesyx.getInstance = getInstance;
   windowInstance.Nesyx.init = init;
-  windowInstance.Nesyx.openModal = openModal;
-  windowInstance.Nesyx.closeModal = closeModal;
+  windowInstance.Nesyx.ethers = ethers;
 }
 
 export default NesyxConnectContainer;

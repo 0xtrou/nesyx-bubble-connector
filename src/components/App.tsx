@@ -1,24 +1,12 @@
-import React from "react";
 import "../assets/css/App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import React from "react";
+
+import { WalletConnectProvider } from "./WalletConnect";
+import { WalletContainerInitParams } from "../types";
+
+function App(params: WalletContainerInitParams) {
+  return <WalletConnectProvider params={params} />;
 }
 
 export default App;

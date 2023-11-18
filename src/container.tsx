@@ -1,6 +1,10 @@
 import React from "react";
+import { JsonRpcSigner } from "ethers";
 import { createRoot, Root } from "react-dom/client";
+
 import App from "./components/App";
+import { WalletInitParams } from "./types";
+
 import "./index.scss";
 
 export class NesyxConnectContainer {
@@ -15,6 +19,13 @@ export class NesyxConnectContainer {
    * @private
    */
   private rootNode: Root | null = null;
+
+  public connect: (() => Promise<void>) | null = null;
+  public getSigner: (() => Promise<JsonRpcSigner | null>) | null = null;
+  public disconnect: (() => Promise<void>) | null = null;
+  public openConnectModal: (() => Promise<void>) | null = null;
+  public openNetworkModal: (() => Promise<void>) | null = null;
+  public openAccountModal: (() => Promise<void>) | null = null;
 
   /**
    * Constructor to initialize the NesyxConnect Container
@@ -39,7 +50,7 @@ export class NesyxConnectContainer {
    * The function to initialize root node.
    * @private
    */
-  public init() {
+  private initRootNode() {
     if (document.getElementById(this.rootSelectorId)) {
       this.rootNode = createRoot(
         document.getElementById(this.rootSelectorId) as HTMLElement,
@@ -70,13 +81,49 @@ export class NesyxConnectContainer {
   /**
    * The function to open the UID modal
    */
-  public openConnectModal(): void {
+  public init(params: WalletInitParams): void {
+    /**
+     * Initialize root node
+     */
+    this.initRootNode();
+
     /**
      * Now to render root node
      */
     this.rootNode?.render(
       <React.StrictMode>
-        <App />
+        <App
+          {...params}
+          onLoaded={({
+            getSigner,
+            disconnect,
+            openNetworkModal,
+            openAccountModal,
+            openConnectModal,
+          }) => {
+            console.log("refreshed wallet exposed states");
+            this.getSigner = async () => {
+              const signer = await getSigner();
+
+              if (signer) {
+                params.on?.connected?.(signer.address);
+                return signer;
+              }
+
+              params.on?.disconnected?.();
+              return null;
+            };
+            this.disconnect = async () => {
+              await disconnect();
+              params.on?.disconnected?.();
+            };
+            this.openConnectModal = openConnectModal;
+            this.openNetworkModal = openNetworkModal;
+            this.openAccountModal = openAccountModal;
+
+            this.getSigner();
+          }}
+        />
       </React.StrictMode>,
     );
   }

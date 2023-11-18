@@ -1,2 +1,5 @@
-@import "generated";
+@import "./generated.scss";
 
+div.nesyx-container {
+  @include tailwind;
+}
