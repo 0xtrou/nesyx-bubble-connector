@@ -1,6 +1,13 @@
 {
   "name": "nesyx-bubble-connect",
   "version": "0.1.0",
+  "license": "GPL-3.0",
+  "sideEffects": false,
+  "main": "lib.entrypoint.js",
+  "types": "lib.entrypoint.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
@@ -10,6 +17,7 @@
     "@types/node": "^16.18.61",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
+    "bs58": "^5.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
@@ -17,10 +25,22 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test": "NODE_ENV=test craco test",
+    "build:craco": "NODE_ENV=production craco build",
+    "build": "bash scripts/build.sh",
+    "start:craco": "craco start",
+    "start": "bash scripts/start.sh",
+    "eject": "react-scripts eject",
+    "lint": "tsc --noEmit && eslint \"**/*.ts\" \"**/*.tsx\" --fix",
+    "gen-css": "tailwindcss build -i ./src/base.tailwind.scss -o ./src/generated.scss",
+    "cleanup-css": "rm -rf ./src/generated.scss",
+    "cleanup-dts": "rm -rf dts/",
+    "cleanup-build": "rm -rf build/",
+    "transform-mixin": "NODE_PATH=. node scripts/transform-mixin.js",
+    "cleanup-pkg": "NODE_PATH=. node scripts/clean-pkg.js",
+    "cleanup": "yarn cleanup-dts && yarn cleanup-pkg && yarn cleanup-build && yarn cleanup-css",
+    "build-css": "yarn cleanup-css && yarn gen-css && yarn transform-mixin",
+    "prepare": "husky install"
   },
   "eslintConfig": {
     "extends": [
@@ -39,5 +59,22 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.2",
+    "@commitlint/config-conventional": "^18.4.2",
+    "@craco/craco": "^7.1.0",
+    "@csstools/postcss-sass": "^5.0.1",
+    "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "@typescript-eslint/parser": "^6.11.0",
+    "craco-plugin-scoped-css": "^1.1.1",
+    "eslint": "8.54.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-plugin-jest": "^27.6.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "eslint-plugin-react": "^7.33.2",
+    "husky": "^8.0.3",
+    "prettier": "^3.1.0",
+    "tailwindcss": "^3.3.5"
   }
 }
