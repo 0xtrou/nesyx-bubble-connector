@@ -1,6 +1,7 @@
 import React from "react";
-import { JsonRpcSigner } from "ethers";
 import { createRoot, Root } from "react-dom/client";
+import { JsonRpcSigner } from "ethers";
+import _ from "lodash";
 
 import App from "./components/App";
 import { WalletInitParams } from "./types";
@@ -26,6 +27,8 @@ export class NesyxConnectContainer {
   public openConnectModal: (() => Promise<void>) | null = null;
   public openNetworkModal: (() => Promise<void>) | null = null;
   public openAccountModal: (() => Promise<void>) | null = null;
+
+  public handleAutoConnect = _.once(() => this.connect?.());
 
   /**
    * Constructor to initialize the NesyxConnect Container
@@ -121,7 +124,7 @@ export class NesyxConnectContainer {
             this.openNetworkModal = openNetworkModal;
             this.openAccountModal = openAccountModal;
 
-            this.getSigner();
+            this.handleAutoConnect();
           }}
         />
       </React.StrictMode>,
