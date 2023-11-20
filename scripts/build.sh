@@ -8,6 +8,7 @@ rm -rf build/
 mkdir dist/
 
 # build
+yarn run lint
 yarn run build-css
 yarn run build:craco
 

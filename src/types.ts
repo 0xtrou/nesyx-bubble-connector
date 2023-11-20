@@ -31,4 +31,6 @@ export interface WalletContainerInitParams {
     openAccountModal: () => Promise<void>;
     openNetworkModal: () => Promise<void>;
   }) => void;
+  onConnected: (address: string) => void;
+  onDisconnected: () => void;
 }

@@ -6,6 +6,7 @@ import {
   WagmiConfig,
   WalletClient,
   useWalletClient,
+  useAccount,
 } from "wagmi";
 import { BrowserProvider, JsonRpcSigner } from "ethers";
 import {
@@ -32,11 +33,22 @@ export function walletClientToSigner(walletClient: WalletClient) {
 export const WalletConnectLoader: FC<{
   params: WalletContainerInitParams;
 }> = (props) => {
-  const { onLoaded } = props.params;
+  const { onLoaded, onConnected, onDisconnected } = props.params;
 
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { data: walletClient } = useWalletClient();
+
+  useAccount({
+    onConnect: (pr) => {
+      if (pr.address) {
+        onConnected(pr.address);
+      }
+    },
+    onDisconnect() {
+      onDisconnected();
+    },
+  });
 
   useEffect(() => {
     onLoaded({

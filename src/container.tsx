@@ -1,7 +1,6 @@
 import React from "react";
 import { createRoot, Root } from "react-dom/client";
 import { JsonRpcSigner } from "ethers";
-import _ from "lodash";
 
 import App from "./components/App";
 import { WalletInitParams } from "./types";
@@ -21,14 +20,11 @@ export class NesyxConnectContainer {
    */
   private rootNode: Root | null = null;
 
-  public connect: (() => Promise<void>) | null = null;
   public getSigner: (() => Promise<JsonRpcSigner | null>) | null = null;
   public disconnect: (() => Promise<void>) | null = null;
   public openConnectModal: (() => Promise<void>) | null = null;
   public openNetworkModal: (() => Promise<void>) | null = null;
   public openAccountModal: (() => Promise<void>) | null = null;
-
-  public handleAutoConnect = _.once(() => this.connect?.());
 
   /**
    * Constructor to initialize the NesyxConnect Container
@@ -97,6 +93,8 @@ export class NesyxConnectContainer {
       <React.StrictMode>
         <App
           {...params}
+          onConnected={(address) => params.on?.connected?.(address)}
+          onDisconnected={() => params.on?.disconnected?.()}
           onLoaded={({
             getSigner,
             disconnect,
@@ -105,26 +103,11 @@ export class NesyxConnectContainer {
             openConnectModal,
           }) => {
             console.log("refreshed wallet exposed states");
-            this.getSigner = async () => {
-              const signer = await getSigner();
-
-              if (signer) {
-                params.on?.connected?.(signer.address);
-                return signer;
-              }
-
-              params.on?.disconnected?.();
-              return null;
-            };
-            this.disconnect = async () => {
-              await disconnect();
-              params.on?.disconnected?.();
-            };
+            this.getSigner = getSigner;
+            this.disconnect = disconnect;
             this.openConnectModal = openConnectModal;
             this.openNetworkModal = openNetworkModal;
             this.openAccountModal = openAccountModal;
-
-            this.handleAutoConnect();
           }}
         />
       </React.StrictMode>,
