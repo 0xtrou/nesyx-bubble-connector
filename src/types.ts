@@ -14,6 +14,7 @@ export interface WalletContainerInitParams {
   projectId: string;
   onLoaded: (params: {
     getSigner: () => Promise<JsonRpcSigner | null>;
+    switchNetwork: (chainKey: string) => Promise<void>;
     disconnect: () => Promise<void>;
     openConnectModal: () => Promise<void>;
     openAccountModal: () => Promise<void>;

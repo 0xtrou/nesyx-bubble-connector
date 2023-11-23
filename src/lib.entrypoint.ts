@@ -34,6 +34,8 @@ export const init = (params: WalletInitParams) => {
    * Initialize new instance
    */
   instance = new NesyxConnectContainer(rootDOMId);
+  (window as any).Nesyx.isInitialized = true;
+
   return instance.init.call(instance, params);
 };
 
@@ -44,6 +46,7 @@ if (window) {
   const windowInstance = window as any;
 
   windowInstance.Nesyx = {};
+  windowInstance.Nesyx.isInitialized = false;
   windowInstance.Nesyx.NesyxConnect = NesyxConnectContainer;
   windowInstance.Nesyx.getInstance = getInstance;
   windowInstance.Nesyx.init = init;

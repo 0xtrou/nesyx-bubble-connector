@@ -77,6 +77,14 @@ export const WalletConnectLoader: FC<{
       openConnectModal: () => open({ view: "Connect" }),
       openAccountModal: () => open({ view: "Account" }),
       openNetworkModal: () => open({ view: "Networks" }),
+      switchNetwork: async (chainId: string) => {
+        const chain = new ChainsProvider().getChain(chainId);
+        if (chain && switchNetworkAsync) {
+          await switchNetworkAsync(chain.id);
+        }
+
+        return Promise.reject(new Error("CHAIN_NOT_FOUND"));
+      },
       disconnect: () => Promise.resolve(disconnect()),
       getSigner: () =>
         Promise.resolve(

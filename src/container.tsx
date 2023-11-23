@@ -28,6 +28,7 @@ export class NesyxConnectContainer {
   public openConnectModal: (() => Promise<void>) | null = null;
   public openNetworkModal: (() => Promise<void>) | null = null;
   public openAccountModal: (() => Promise<void>) | null = null;
+  public switchNetwork: ((chainId: string) => Promise<void>) | null = null;
 
   public initialConfig: WalletInitParams | null = null;
 
@@ -97,6 +98,7 @@ export class NesyxConnectContainer {
           onConnected={(address) => params.on?.connected?.(address)}
           onDisconnected={() => params.on?.disconnected?.()}
           onLoaded={({
+            switchNetwork,
             getSigner,
             disconnect,
             openNetworkModal,
@@ -109,6 +111,7 @@ export class NesyxConnectContainer {
             this.openConnectModal = openConnectModal;
             this.openNetworkModal = openNetworkModal;
             this.openAccountModal = openAccountModal;
+            this.switchNetwork = switchNetwork;
           }}
         />
       </React.StrictMode>,
