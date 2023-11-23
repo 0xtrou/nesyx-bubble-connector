@@ -8,6 +8,8 @@ import {
   useWalletClient,
   useAccount,
   PublicClient,
+  useSwitchNetwork,
+  useNetwork,
 } from "wagmi";
 import { BrowserProvider, JsonRpcProvider, JsonRpcSigner } from "ethers";
 import {
@@ -15,10 +17,11 @@ import {
   defaultWagmiConfig,
   useWeb3Modal,
 } from "@web3modal/wagmi/react";
-
 import { ChainFormatters } from "viem";
 import * as DefaultChains from "viem/chains";
+
 import { WalletContainerInitParams } from "../types";
+import { ChainsProvider } from "../providers/chains.provider";
 
 export function walletClientToSigner(walletClient: WalletClient) {
   const { account, chain, transport } = walletClient;
@@ -44,14 +47,22 @@ export function publicClientToProvider(publicClient: PublicClient) {
 export const WalletConnectLoader: FC<{
   params: WalletContainerInitParams;
 }> = (props) => {
-  const { onLoaded, onConnected, onDisconnected } = props.params;
+  const { onLoaded, onConnected, onDisconnected, chainKey } = props.params;
 
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { data: walletClient } = useWalletClient();
+  const chain =
+    new ChainsProvider().getChain(chainKey) || DefaultChains["mainnet"];
+  const network = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork({ chainId: chain.id });
 
   useAccount({
-    onConnect: (pr) => {
+    onConnect: async (pr) => {
+      if (network.chain?.id !== chain.id && switchNetworkAsync) {
+        await switchNetworkAsync();
+      }
+
       if (pr.address) {
         onConnected(pr.address);
       }
@@ -82,19 +93,26 @@ export const WalletConnectProvider: FC<{
 }> = (props) => {
   const { projectId, chainKey } = props.params;
 
-  const chains: Chain<ChainFormatters>[] = [chainKey]
+  const chains: Chain<ChainFormatters>[] = Object.keys(DefaultChains)
     .map(
       // @ts-expect-error Safe to ignore
       (key) => DefaultChains[key],
     )
     .filter((elm) => !!elm);
+  const desiredChain =
+    new ChainsProvider().getChain(chainKey) || DefaultChains["mainnet"];
 
   const wagmiConfig = defaultWagmiConfig({
     chains,
     projectId,
   });
 
-  createWeb3Modal({ wagmiConfig, projectId, chains });
+  createWeb3Modal({
+    wagmiConfig,
+    projectId,
+    chains,
+    defaultChain: desiredChain,
+  });
 
   return (
     <WagmiConfig config={wagmiConfig}>
