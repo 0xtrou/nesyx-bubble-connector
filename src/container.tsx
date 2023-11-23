@@ -1,11 +1,14 @@
 import React from "react";
 import { createRoot, Root } from "react-dom/client";
-import { JsonRpcSigner } from "ethers";
+import { JsonRpcProvider, JsonRpcSigner } from "ethers";
 
 import App from "./components/App";
-import { WalletInitParams } from "./types";
+import { SmartContractActionConfig, WalletInitParams } from "./types";
 
 import "./index.scss";
+import { TransactionBuilder } from "./services/Transaction.builder";
+import { TransactionClient } from "./services/Transaction.signer";
+import { ChainsProvider } from "./providers/chains.provider";
 
 export class NesyxConnectContainer {
   /**
@@ -25,6 +28,8 @@ export class NesyxConnectContainer {
   public openConnectModal: (() => Promise<void>) | null = null;
   public openNetworkModal: (() => Promise<void>) | null = null;
   public openAccountModal: (() => Promise<void>) | null = null;
+
+  public initialConfig: WalletInitParams | null = null;
 
   /**
    * Constructor to initialize the NesyxConnect Container
@@ -61,9 +66,6 @@ export class NesyxConnectContainer {
     return this.rootNode;
   }
 
-  /**
-   * The function to destroy root node.
-   */
   public destroy() {
     /**
      * Unmount root node
@@ -77,10 +79,9 @@ export class NesyxConnectContainer {
     document.getElementById(this.rootSelectorId)?.remove();
   }
 
-  /**
-   * The function to open the UID modal
-   */
   public init(params: WalletInitParams): void {
+    this.initialConfig = params;
+
     /**
      * Initialize root node
      */
@@ -112,5 +113,133 @@ export class NesyxConnectContainer {
         />
       </React.StrictMode>,
     );
+  }
+
+  public async executeSmartContractAction({
+    context,
+    config,
+    params,
+    onlyEstimateGas,
+  }: SmartContractActionConfig) {
+    const signer = (await this.getSigner?.()) || undefined;
+    const chain = new ChainsProvider().getChain(
+      this.initialConfig?.chainKey || "mainnet",
+    );
+
+    if (!chain) {
+      throw new Error("CHAIN_NOT_FOUND");
+    }
+    const client = new JsonRpcProvider(chain.rpcUrls.public.http[0], chain.id);
+
+    if (context.sendATransaction && !signer) {
+      throw new Error("SIGNER_UNAVAILABLE");
+    }
+
+    try {
+      const txBuilder = new TransactionBuilder(
+        JSON.parse(context.contractABI),
+        context.contractAddress,
+      );
+
+      const fineTunedParams = params.map((param) => {
+        try {
+          const value = JSON.parse(param.toString());
+          if (typeof value === "number") {
+            return param;
+          }
+          return value;
+        } catch {
+          return param;
+        }
+      });
+
+      const request = txBuilder.buildTransaction(
+        context.functionName,
+        fineTunedParams,
+        config,
+      );
+
+      const txClient = new TransactionClient(client, signer);
+
+      if (onlyEstimateGas) {
+        return txClient
+          .estimateGas(request)
+          .then((res) => {
+            context.onSuccess({
+              data: null,
+              status: "success",
+              errorMessage: null,
+              consumedGas: res?.toString() || "0",
+            });
+
+            return res;
+          })
+          .catch((err) => {
+            context.onError({
+              data: null,
+              status: "error",
+              errorMessage: err?.message || "Unknown error",
+              consumedGas: "0",
+            });
+
+            return err;
+          });
+      }
+
+      if (context.sendATransaction) {
+        return txClient
+          .signAndSendTransaction(request)
+          .then((tx) => {
+            context.onSuccess({
+              data: tx,
+              status: "success",
+              errorMessage: null,
+              consumedGas: tx?.gasUsed?.toString() || "0",
+            });
+
+            return tx;
+          })
+          .catch((err) => {
+            context.onError({
+              data: null,
+              status: "error",
+              errorMessage: err?.message || "Unknown error",
+              consumedGas: "0",
+            });
+
+            return err;
+          });
+      } else {
+        return txClient
+          .call(request)
+          .then((tx) => {
+            context.onSuccess({
+              data: txBuilder.decodeFunctionResult(context.functionName, tx),
+              status: "success",
+              errorMessage: null,
+              consumedGas: "0",
+            });
+
+            return tx;
+          })
+          .catch((err) => {
+            context.onError({
+              data: null,
+              status: "error",
+              errorMessage: err?.message || "Unknown error",
+              consumedGas: "0",
+            });
+
+            return err;
+          });
+      }
+    } catch (e) {
+      context.onError({
+        data: null,
+        status: "error",
+        errorMessage: (e as any).message || "Unknown error",
+        consumedGas: "0",
+      });
+    }
   }
 }

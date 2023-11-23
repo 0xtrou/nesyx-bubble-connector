@@ -7,8 +7,9 @@ import {
   WalletClient,
   useWalletClient,
   useAccount,
+  PublicClient,
 } from "wagmi";
-import { BrowserProvider, JsonRpcSigner } from "ethers";
+import { BrowserProvider, JsonRpcProvider, JsonRpcSigner } from "ethers";
 import {
   createWeb3Modal,
   defaultWagmiConfig,
@@ -28,6 +29,16 @@ export function walletClientToSigner(walletClient: WalletClient) {
   };
   const provider = new BrowserProvider(transport, network);
   return new JsonRpcSigner(provider, account.address);
+}
+
+export function publicClientToProvider(publicClient: PublicClient) {
+  const { chain, transport } = publicClient;
+  const network = {
+    chainId: chain.id,
+    name: chain.name,
+    ensAddress: chain.contracts?.ensRegistry?.address,
+  };
+  return new JsonRpcProvider(transport.url, network);
 }
 
 export const WalletConnectLoader: FC<{
@@ -55,9 +66,11 @@ export const WalletConnectLoader: FC<{
       openConnectModal: () => open({ view: "Connect" }),
       openAccountModal: () => open({ view: "Account" }),
       openNetworkModal: () => open({ view: "Networks" }),
-      disconnect: async () => disconnect(),
-      getSigner: async () =>
-        walletClient ? walletClientToSigner(walletClient) : null,
+      disconnect: () => Promise.resolve(disconnect()),
+      getSigner: () =>
+        Promise.resolve(
+          walletClient ? walletClientToSigner(walletClient) : null,
+        ),
     });
   }, [walletClient, open, disconnect]);
 
@@ -67,9 +80,9 @@ export const WalletConnectLoader: FC<{
 export const WalletConnectProvider: FC<{
   params: WalletContainerInitParams;
 }> = (props) => {
-  const { projectId, chainKeys } = props.params;
+  const { projectId, chainKey } = props.params;
 
-  const chains: Chain<ChainFormatters>[] = chainKeys
+  const chains: Chain<ChainFormatters>[] = [chainKey]
     .map(
       // @ts-expect-error Safe to ignore
       (key) => DefaultChains[key],

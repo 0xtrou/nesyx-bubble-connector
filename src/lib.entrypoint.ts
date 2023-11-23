@@ -3,6 +3,7 @@ import * as ethers from "ethers";
 import { NesyxConnectContainer } from "./container";
 import { UtilsProvider } from "./providers/utils.provider";
 import { WalletInitParams } from "./types";
+import { ChainsProvider } from "./providers/chains.provider";
 
 let instance: NesyxConnectContainer;
 
@@ -47,6 +48,8 @@ if (window) {
   windowInstance.Nesyx.getInstance = getInstance;
   windowInstance.Nesyx.init = init;
   windowInstance.Nesyx.ethers = ethers;
+  windowInstance.Nesyx.utils = {};
+  windowInstance.Nesyx.utils.ChainsProvider = new ChainsProvider();
 }
 
 export default NesyxConnectContainer;
