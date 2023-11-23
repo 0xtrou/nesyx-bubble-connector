@@ -81,6 +81,7 @@ export const WalletConnectLoader: FC<{
         const chain = new ChainsProvider().getChain(chainId);
         if (chain && switchNetworkAsync) {
           await switchNetworkAsync(chain.id);
+          return;
         }
 
         return Promise.reject(new Error("CHAIN_NOT_FOUND"));
