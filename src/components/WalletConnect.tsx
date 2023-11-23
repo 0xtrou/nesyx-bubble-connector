@@ -67,7 +67,7 @@ export const WalletConnectLoader: FC<{
 export const WalletConnectProvider: FC<{
   params: WalletContainerInitParams;
 }> = (props) => {
-  const { projectId, metadata, chainKeys } = props.params;
+  const { projectId, chainKeys } = props.params;
 
   const chains: Chain<ChainFormatters>[] = chainKeys
     .map(
@@ -79,7 +79,6 @@ export const WalletConnectProvider: FC<{
   const wagmiConfig = defaultWagmiConfig({
     chains,
     projectId,
-    metadata,
   });
 
   createWeb3Modal({ wagmiConfig, projectId, chains });
