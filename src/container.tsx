@@ -28,7 +28,7 @@ export class NesyxConnectContainer {
   public openConnectModal: (() => Promise<void>) | null = null;
   public openNetworkModal: (() => Promise<void>) | null = null;
   public openAccountModal: (() => Promise<void>) | null = null;
-  public switchNetwork: ((chainId: string) => Promise<void>) | null = null;
+  public switchNetwork: ((chainId: number) => Promise<void>) | null = null;
 
   public initialConfig: WalletInitParams | null = null;
 
@@ -111,7 +111,19 @@ export class NesyxConnectContainer {
             this.openConnectModal = openConnectModal;
             this.openNetworkModal = openNetworkModal;
             this.openAccountModal = openAccountModal;
-            this.switchNetwork = switchNetwork;
+            this.switchNetwork = async (chainId: number) => {
+              const chain = new ChainsProvider().getChain(chainId);
+              if (chain) {
+                await switchNetwork(chain.id);
+              }
+
+              if (this.initialConfig) {
+                this.initialConfig = {
+                  ...this.initialConfig,
+                  chainId: chain?.id || 1,
+                };
+              }
+            };
           }}
         />
       </React.StrictMode>,
@@ -126,7 +138,7 @@ export class NesyxConnectContainer {
   }: SmartContractActionConfig) {
     const signer = (await this.getSigner?.()) || undefined;
     const chain = new ChainsProvider().getChain(
-      this.initialConfig?.chainKey || "mainnet",
+      this.initialConfig?.chainId || 1,
     );
 
     if (!chain) {

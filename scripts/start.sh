@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+yarn lint
+
 # build css first
 yarn run build-css
 

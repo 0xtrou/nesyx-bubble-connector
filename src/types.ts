@@ -1,20 +1,29 @@
 import { JsonRpcSigner, TransactionReceipt } from "ethers";
 
 export interface WalletInitParams {
-  chainKey: string;
+  chainId: number;
   projectId: string;
   on?: {
     connected: (address: string) => void;
     disconnected: () => void;
   };
+  customChains: {
+    chainId: number;
+    chainName: string;
+    chainRpc: string;
+    chainExplorerUrl: string;
+    chainGasTokenName: string;
+    chainGasTokenSymbol: string;
+    chainGasTokenDecimals: number;
+  }[];
 }
 
 export interface WalletContainerInitParams {
-  chainKey: string;
+  chainId: number;
   projectId: string;
   onLoaded: (params: {
     getSigner: () => Promise<JsonRpcSigner | null>;
-    switchNetwork: (chainKey: string) => Promise<void>;
+    switchNetwork: (chainId: number) => Promise<void>;
     disconnect: () => Promise<void>;
     openConnectModal: () => Promise<void>;
     openAccountModal: () => Promise<void>;
@@ -22,6 +31,15 @@ export interface WalletContainerInitParams {
   }) => void;
   onConnected: (address: string) => void;
   onDisconnected: () => void;
+  customChains: {
+    chainId: number;
+    chainName: string;
+    chainRpc: string;
+    chainExplorerUrl: string;
+    chainGasTokenName: string;
+    chainGasTokenSymbol: string;
+    chainGasTokenDecimals: number;
+  }[];
 }
 
 export interface SmartContractActionConfig {

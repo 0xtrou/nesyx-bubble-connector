@@ -47,13 +47,13 @@ export function publicClientToProvider(publicClient: PublicClient) {
 export const WalletConnectLoader: FC<{
   params: WalletContainerInitParams;
 }> = (props) => {
-  const { onLoaded, onConnected, onDisconnected, chainKey } = props.params;
+  const { onLoaded, onConnected, onDisconnected, chainId } = props.params;
 
   const { open } = useWeb3Modal();
   const { disconnect } = useDisconnect();
   const { data: walletClient } = useWalletClient();
   const chain =
-    new ChainsProvider().getChain(chainKey) || DefaultChains["mainnet"];
+    new ChainsProvider().getChain(chainId) || DefaultChains["mainnet"];
   const network = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork({ chainId: chain.id });
 
@@ -77,8 +77,10 @@ export const WalletConnectLoader: FC<{
       openConnectModal: () => open({ view: "Connect" }),
       openAccountModal: () => open({ view: "Account" }),
       openNetworkModal: () => open({ view: "Networks" }),
-      switchNetwork: async (chainId: string) => {
+      switchNetwork: async (chainId: number) => {
         const chain = new ChainsProvider().getChain(chainId);
+
+        console.log({ chainId, chain });
         if (chain && switchNetworkAsync) {
           await switchNetworkAsync(chain.id);
           return;
@@ -100,16 +102,39 @@ export const WalletConnectLoader: FC<{
 export const WalletConnectProvider: FC<{
   params: WalletContainerInitParams;
 }> = (props) => {
-  const { projectId, chainKey } = props.params;
+  const { projectId, chainId, customChains } = props.params;
 
-  const chains: Chain<ChainFormatters>[] = Object.keys(DefaultChains)
-    .map(
-      // @ts-expect-error Safe to ignore
-      (key) => DefaultChains[key],
-    )
-    .filter((elm) => !!elm);
+  const customChainList = customChains.map((chain) => {
+    return {
+      id: chain.chainId,
+      name: chain.chainName,
+      network: `custom-${chain.chainName.toLowerCase().replaceAll(" ", "-")}`,
+      nativeCurrency: {
+        name: chain.chainGasTokenName,
+        symbol: chain.chainGasTokenSymbol,
+        decimals: chain.chainGasTokenDecimals,
+      },
+      rpcUrls: {
+        public: { http: [chain.chainRpc] },
+        default: { http: [chain.chainRpc] },
+      },
+      blockExplorers: {
+        default: { name: "Explorer", url: chain.chainExplorerUrl },
+      },
+    };
+  });
+  ChainsProvider.saveCustomChains(customChainList);
+
+  const chains: Chain<ChainFormatters>[] = customChainList.concat(
+    Object.keys(DefaultChains)
+      .map(
+        // @ts-expect-error Safe to ignore
+        (key) => DefaultChains[key],
+      )
+      .filter((elm) => !!elm),
+  );
   const desiredChain =
-    new ChainsProvider().getChain(chainKey) || DefaultChains["mainnet"];
+    new ChainsProvider().getChain(chainId) || DefaultChains["mainnet"];
 
   const wagmiConfig = defaultWagmiConfig({
     chains,
